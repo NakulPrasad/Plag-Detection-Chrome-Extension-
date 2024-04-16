@@ -7,14 +7,13 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
 function handleSubmit() {
     chrome.storage.local.get('verdict',(data)=>{
-        // console.log(data.verdict); 
-        //get input from user and passing to background 
-        const submissionLength = document.getElementById("submissionLength").value;
-        const timeDifference = document.getElementById("timeDifference").value;
-        // console.log(submissionLength);
-        // chrome.storage.local.set({"submissionLength" : submissionLength, "timeDifference": timeDifference });
+        // console.log(data); 
+        //get input from user and passing to background.js
+        let submissionCount = document.getElementById("submissionCount").value;
+        let timeDifference = document.getElementById("timeDifference").value;
+        // console.log(submissionCount);
 
-        chrome.runtime.sendMessage({"submissionLength" : submissionLength})
+        chrome.runtime.sendMessage({"submissionCount" : submissionCount})
         chrome.runtime.sendMessage({"timeDifference": timeDifference })
 
         

@@ -23,34 +23,25 @@ let apiData;
         }
 
         //performing sliding window
-        const thresholdMinutes = 5;
-        const submissionCount = 2;
+        // let timeDifference = 5;
+        // let submissionCount = 2;
 
-        chrome.runtime.onMessage.addListener((req)=>{
-            let timeDifference;
-            let submissionLength 
-            if(req.submissionLength && req.timeDifference ){
-                submissionLength  = req.submissionLength;
-                timeDifference = req.timeDifference;
-                console.log("recived", submissionLength);
-                console.log("recived", timeDifference);
-            }
-        })
-
-        const checkPlag =detectPlagiarism(apiData.data,thresholdMinutes,submissionCount ); 
+        let timeDifference;
+        let submissionCount;
+        const checkPlag =detectPlagiarism(apiData.data,timeDifference,submissionCount ); 
         // console.log(checkPlag)
 
         //storing verdict to localstorage
         chrome.storage.local.set({verdict : checkPlag});
 
-        // chrome.storage.local.get('submissionLength',(data)=>{
-        //     console.log(data.submissionLength);
-        // });
-
-        
-        
-
-
+        chrome.runtime.onMessage.addListener((req,sender,sendRes)=>{
+            if(req.submissionCount || req.timeDifference ){
+                submissionCount = req.submissionCount;
+                timeDifference = req.timeDifference;
+                // console.log("recived", submissionCount);
+                // console.log("recived", timeDifference);
+            }
+        })
     }
     catch (error) {
         console.error("Error", error);
@@ -60,7 +51,7 @@ let apiData;
 
 })();
 
-function detectPlagiarism(submissions, thresholdMinutes, submissionCount) {
+function detectPlagiarism(submissions, timeDifference, submissionCount) {
     // Extract submission times and convert them to milliseconds since epoch
     const submissionTimes = submissions.map(submission => Date.parse(submission.created_at));
     console.log(submissionTimes);
@@ -73,7 +64,7 @@ function detectPlagiarism(submissions, thresholdMinutes, submissionCount) {
     
     for (let i = 0; i < n; i++) {
         // Check if current submission is within the time window
-        while (submissionTimes[i] - submissionTimes[startIndex] > thresholdMinutes * 60000) {
+        while (submissionTimes[i] - submissionTimes[startIndex] > timeDifference * 60000) {
             submissionsInWindow--;
             startIndex++;
         }
