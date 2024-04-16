@@ -25,9 +25,29 @@ let apiData;
         //performing sliding window
         const thresholdMinutes = 5;
         const submissionCount = 2;
+
+        chrome.runtime.onMessage.addListener((req)=>{
+            let timeDifference;
+            let submissionLength 
+            if(req.submissionLength && req.timeDifference ){
+                submissionLength  = req.submissionLength;
+                timeDifference = req.timeDifference;
+                console.log("recived", submissionLength);
+                console.log("recived", timeDifference);
+            }
+        })
+
         const checkPlag =detectPlagiarism(apiData.data,thresholdMinutes,submissionCount ); 
-        console.log(checkPlag)
+        // console.log(checkPlag)
+
+        //storing verdict to localstorage
         chrome.storage.local.set({verdict : checkPlag});
+
+        // chrome.storage.local.get('submissionLength',(data)=>{
+        //     console.log(data.submissionLength);
+        // });
+
+        
         
 
 
