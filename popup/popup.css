@@ -1,0 +1,10 @@
+.container{
+    width: 200px;
+    height: 100px;
+}
+.flexbox{
+    display: flex;
+    vertical-align: center;
+    align-items: center;
+    justify-content: center;
+}
