@@ -11,7 +11,7 @@ let apiData;
         const data = await res.json();
         apiData = data;
 
-        console.log(apiData);
+        //sorting the array
         
         if(apiData){
             apiData.data.sort((a,b)=>{
@@ -19,8 +19,14 @@ let apiData;
                 const timeB = Date.parse(b.created_at);
                 return timeA - timeB;
             })
+            console.log(apiData);
         }
-        console.log(apiData);
+
+        //performing sliding window
+        const thresholdMinutes = 5;
+        const submissionCount = 2;
+        console.log(detectPlagiarism(apiData.data,thresholdMinutes,submissionCount ));
+
 
     }
     catch (error) {
@@ -30,4 +36,36 @@ let apiData;
     
 
 })();
+
+function detectPlagiarism(submissions, thresholdMinutes, submissionCount) {
+    // Extract submission times and convert them to milliseconds since epoch
+    const submissionTimes = submissions.map(submission => Date.parse(submission.created_at));
+    
+    const n = submissionTimes.length;
+    
+    // Initialize variables to track submissions and time window
+    let submissionsInWindow = 0;
+    let startIndex = 0;
+    
+    for (let i = 0; i < n; i++) {
+        // Check if current submission is within the time window
+        while (submissionTimes[i] - submissionTimes[startIndex] > thresholdMinutes * 60000) {
+            submissionsInWindow--;
+            startIndex++;
+        }
+        
+        submissionsInWindow++;
+        
+        // Check if submissions in window exceed the threshold
+        if (submissionsInWindow > submissionCount) {
+            return "plag";
+        }
+    }
+    
+    return "no plag";
+}
+
+
+
+
 
