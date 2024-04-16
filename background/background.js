@@ -25,7 +25,10 @@ let apiData;
         //performing sliding window
         const thresholdMinutes = 5;
         const submissionCount = 2;
-        console.log(detectPlagiarism(apiData.data,thresholdMinutes,submissionCount ));
+        const checkPlag =detectPlagiarism(apiData.data,thresholdMinutes,submissionCount ); 
+        console.log(checkPlag)
+        chrome.storage.local.set({verdict : checkPlag});
+        
 
 
     }
@@ -40,6 +43,7 @@ let apiData;
 function detectPlagiarism(submissions, thresholdMinutes, submissionCount) {
     // Extract submission times and convert them to milliseconds since epoch
     const submissionTimes = submissions.map(submission => Date.parse(submission.created_at));
+    console.log(submissionTimes);
     
     const n = submissionTimes.length;
     

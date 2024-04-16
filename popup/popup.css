@@ -1,10 +1,14 @@
 .container{
     width: 200px;
-    height: 100px;
+    height: 300px;
 }
 .flexbox{
     display: flex;
+    flex-direction: column;
     vertical-align: center;
     align-items: center;
     justify-content: center;
+}
+input{
+    margin-bottom: 8px;
 }

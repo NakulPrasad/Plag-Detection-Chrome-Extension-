@@ -2,9 +2,10 @@
     "manifest_version": 3,
     "name": "Plag Detection",
     "version": "1.0",
-    "description": "Description of my extension",
+    "description": "Plag Detection",
     "permissions": [
-      "activeTab"
+      "activeTab",
+      "storage"
     ],
     "action": {
       "default_popup": "popup/popup.html"
