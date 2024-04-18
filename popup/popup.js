@@ -33,7 +33,10 @@ function showVerdict(verdict) {
 
     if (verdict === 'true')
         body.style.backgroundColor = "red";
-    else
-        body.style.backgroundColor = "green";
+    else if(verdict == 'false')
+    body.style.backgroundColor = "green";
+    else 
+    body.style.backgroundColor = "orange";
+
 
 }

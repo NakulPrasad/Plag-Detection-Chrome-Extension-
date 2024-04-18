@@ -22,7 +22,6 @@ let apiData;
                 const timeB = Date.parse(b.created_at);
                 return timeA - timeB;
             })
-            // console.log(apiData);
         }
 
         //performing sliding window
@@ -78,6 +77,9 @@ function detectPlagiarism(submissions, timeDifference, submissionCount) {
             printSubmission(startIndex, i, submissionTimes);
             return 'true';
         }
+        else if(submissionsInWindow >= Math.floor(submissionCount * 0.50)){
+            return 'unsure';
+        }   
     }
 
     return 'false';
