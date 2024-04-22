@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plag Detection</title>
     <link rel="stylesheet" href="popup.css">
-    
+
 </head>
+
 <body>
     <div class="container flexbox">
         <h2>Plag Detection</h2>
         <input type="number" id="submissionCount" placeholder="Submission Count">
         <input type="number" id="timeDifference" placeholder="Time Difference">
         <button id="checkPlag">Check Plag</button>
+        <button id="download">download</button>
     </div>
+    <!-- use version 0.20.2 -->
+   <script src="../assets/xlsx/xlsx.full.min.js"></script>
+
     <script src="popup.js"></script>
 </body>
+
 </html>

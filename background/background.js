@@ -2,6 +2,7 @@ let apiData;
 
 (async () => {
     try {
+        // Fetch data from API endpoint
         const res = await fetch("https://mentorpick.com/api/courseV2/contest/submission/my?problem=&verdictString=ACCEPTED&contestSlug=bz-bvrith-y22-phase-1-week-1-practice&language=&limit=100&page=1&user=23wh5a0515-jangili&courseId=65fadb136edf77d59a861c05&contestId=5384ef75-30ae-4101-bfd8-7a7645869000");
 
         if (!res.ok) {
@@ -9,40 +10,45 @@ let apiData;
         }
         apiData = await res.json();
 
-        // console.log(apiData.data);
-
+        // Remove duplicate submissions based on problem
         const uniqueSubmissions = removeDuplicates(apiData.data, "problem");
 
-        // console.log(uniqueSubmissions);
-
-        //sorting the object array
+        // Sort submissions by creation time
         if (uniqueSubmissions) {
             uniqueSubmissions.sort((a, b) => {
                 const timeA = Date.parse(a.created_at);
                 const timeB = Date.parse(b.created_at);
                 return timeA - timeB;
-            })
+            });
         }
-
-        //performing sliding window
-        // let timeDifference = 5;
-        // let submissionCount = 2;
 
         let timeDifference;
         let submissionCount;
 
-        chrome.runtime.onMessage.addListener((req) => {
-            if (req.submissionCount && req.timeDifference) {
-                submissionCount = req.submissionCount;
-                timeDifference = req.timeDifference;
-                console.log("Received submissionCount:", submissionCount);
-                console.log("Received timeDifference:", timeDifference);
+        // Listen for messages from background.js
+        chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
+            if (req.action === 'checkPlag') {
+                if (req.submissionCount && req.timeDifference) {
+                    // Get submission count and time difference from message
+                    submissionCount = req.submissionCount;
+                    timeDifference = req.timeDifference;
 
-                const checkPlag = detectPlagiarism(uniqueSubmissions, timeDifference, submissionCount);
-                console.log(checkPlag);
-                if (checkPlag) {
-                    chrome.runtime.sendMessage({ "verdict": checkPlag });
+                    // Check for plagiarism
+                    const checkPlag = detectPlagiarism(uniqueSubmissions, timeDifference, submissionCount);
+                    console.log(checkPlag);
+                    if (checkPlag) {
+                        // Send plagiarism verdict to background.js
+                        chrome.runtime.sendMessage({ action :'verdict' ,verdict: checkPlag });
+                    }
                 }
+            }
+            else if(req.action === 'getExcelData'){
+                // Retrieve Excel data from local storage
+                chrome.storage.local.get('excelData', (result)=>{
+                    console.log(result.excelData);
+                    sendResponse({excelData : result.excelData});
+                });
+                return true;
             }
         })
     }
@@ -52,63 +58,7 @@ let apiData;
     }
 })();
 
-function detectPlagiarism(submissions, timeDifference, submissionCount) {
-    // Extract submission times and convert them to milliseconds since epoch
-    const submissionTimes = submissions.map(submission => Date.parse(submission.created_at));
-    // console.log(submissionTimes);
-
-    const n = submissionTimes.length;
-
-    // Initialize variables to track submissions and time window
-    let submissionsInWindow = 0;
-    let startIndex = 0;
-
-    for (let i = 0; i < n; i++) {
-        // Check if current submission is within the time window
-        while (submissionTimes[i] - submissionTimes[startIndex] > timeDifference * 60000) {
-            submissionsInWindow--;
-            startIndex++;
-        }
-
-        submissionsInWindow++;
-
-        // Check if submissions in window exceed the threshold
-        if (submissionsInWindow > submissionCount) {
-            printSubmission(startIndex, i, submissionTimes);
-            return 'true';
-        }
-        else if(submissionsInWindow >= Math.floor(submissionCount * 0.50)){
-            return 'unsure';
-        }   
-    }
-
-    return 'false';
-}
-
-function printSubmission(startIndex, endIndex, submissionTimes) {
-    const plagiarismIndices = [];
-    for (let j = startIndex; j <= endIndex; j++) {
-        plagiarismIndices.push(submissionTimes[j]);
-    }
-    // const dateObjects = plagiarismIndices.map(timestamp => new Date(timestamp));
-    const dateObjects = plagiarismIndices.map(timestamp => {
-
-        const date = new Date(timestamp);
-        return date.toLocaleString('en-US', {
-            timeZone: 'Asia/Kolkata', hour: 'numeric', minute: 'numeric', hour12: true, day: 'numeric',
-            month: 'numeric',
-            year: 'numeric'
-        });
-    });
-
-    console.log(dateObjects);
-    // const arr = JSON.stringify(plagiarismIndices);
-    // console.log(arr);
-    // plagiarismIndices.forEach(submisssion =>{
-    //     console.log(submisssion);
-    // })
-}
-
+// Function to remove duplicate submissions
 function removeDuplicates(submissions, field) {
     const uniqueSubmissions = submissions.reduce((acc, curr) => {
         const fieldValue = curr[field].title;
@@ -121,6 +71,43 @@ function removeDuplicates(submissions, field) {
     return Array.from(uniqueSubmissions.values());
 }
 
+// Function to detect plagiarism based on time difference and submission count
+function detectPlagiarism(submissionsTimes, timeDifference, submissionCount) {
+    const n = submissionsTimes.length;
+    let submissionsInWindow = 0;
+    let startIndex = 0;
 
+    for (let i = 0; i < n; i++) {
+        while (Date.parse(submissionsTimes[i].created_at) - Date.parse(submissionsTimes[startIndex].created_at) > timeDifference * 60000) {
+            submissionsInWindow--;
+            startIndex++;
+        }
 
+        submissionsInWindow++;
 
+        if (submissionsInWindow >= Math.floor(submissionCount * 0.50) && submissionsInWindow <= submissionCount) {
+            // Print plagiarism detection details
+            printSubmission(startIndex, i, submissionsTimes);
+            return 'unsure';
+        }
+        else if (submissionsInWindow > submissionCount) {
+            // Print plagiarism detection details
+            printSubmission(startIndex, i, submissionsTimes);
+            return 'true';
+        }
+    }
+
+    return 'false';
+}
+
+// Function to print plagiarism details and store Excel data
+function printSubmission(startIndex, endIndex, submissionTimes) {
+    const plagiarismIndices = [];
+    for (let j = startIndex; j <= endIndex; j++) {
+        plagiarismIndices.push(submissionTimes[j]);
+    }
+    const arr = JSON.stringify(plagiarismIndices);
+
+    // Store Excel data in local storage
+    chrome.storage.local.set({excelData : arr});
+}
