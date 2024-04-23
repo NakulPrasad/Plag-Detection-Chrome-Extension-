@@ -111,3 +111,26 @@ function printSubmission(startIndex, endIndex, submissionTimes) {
     // Store Excel data in local storage
     chrome.storage.local.set({excelData : arr});
 }
+
+// Listen for messages from the content script to load api
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if (message.message === "matching_url_opened") {
+        // Get the profile ID from the message
+        var profileId = message.profileId;
+        
+        // Call your API with the profile ID
+        fetch('https://mentorpick.com/api/submission?limit=100&page=1&user=' + profileId)
+            .then(response => response.json())
+            .then(data => {
+                console.log("API Response:", data);
+                
+                // processData(data);
+                // You can do further processing with the API response here
+            })
+            .catch(error => {
+                console.error("API Error:", error);
+            });
+    }
+});
+
+

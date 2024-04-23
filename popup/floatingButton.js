@@ -1,38 +1,29 @@
-// content.js
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action === "injectButton") {
-        injectFloatingButton();
+function checkUrlAndCallApi() {
+    const currentUrl = window.location.href;
+    
+    if (currentUrl.startsWith('https://mentorpick.com/profile/')) {
+        const profileId = currentUrl.split('profile/')[1];
+        insertButton();
+        chrome.runtime.sendMessage({ message: "matching_url_opened", profileId: profileId });
     }
-});
+}
 
-function injectFloatingButton() {
-    // Create the button element
-    var button = document.createElement('button');
-    button.textContent = 'Floating Button';
-    button.style.position = 'fixed';
-    button.style.bottom = '20px';
-    button.style.right = '20px';
-    button.style.zIndex = '1000';
-
-    // Append the button to the body
-    document.body.appendChild(button);
-
-    // Make the button draggable
-    button.addEventListener('mousedown', function(e) {
-        var offsetX = e.clientX - button.offsetLeft;
-        var offsetY = e.clientY - button.offsetTop;
-
-        function mouseMoveHandler(e) {
-            button.style.left = (e.clientX - offsetX) + 'px';
-            button.style.top = (e.clientY - offsetY) + 'px';
+checkUrlAndCallApi();
+            
+function insertButton(){
+    console.log("hi");
+    const checkInterval = setInterval(()=>{
+        const header = document.querySelectorAll('#root > div:nth-child(2) > div > div > div.mantine-Col-root.mantine-cpanvy > div > div.mantine-Paper-root.mantine-1gi5o8w')[0];
+        if(header) 
+        {
+            clearInterval(checkInterval)
+            console.log(header);
+            let newButton = document.createElement('button');
+            newButton.textContent = "Check Plag";
+            newButton.style.backgroundColor = "Red";
+            header.appendChild(newButton);
+        
         }
-
-        function mouseUpHandler() {
-            document.removeEventListener('mousemove', mouseMoveHandler);
-            document.removeEventListener('mouseup', mouseUpHandler);
-        }
-
-        document.addEventListener('mousemove', mouseMoveHandler);
-        document.addEventListener('mouseup', mouseUpHandler);
-    });
+    },5000);
+    
 }
