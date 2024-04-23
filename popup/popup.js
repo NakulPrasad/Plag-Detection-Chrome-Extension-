@@ -61,10 +61,10 @@ function fetchExcelData() {
 function generateExcelSheet(data) {
     const parsedData = JSON.parse(data);
     const rows = parsedData.map(row =>({
-        name : row.user.firstName + " " + row.user.lastName,
-        userName : row.user.userName,
-        time : row.created_at,
-        contest : row.contest.slug,
+        name : row.firstName + " " + row.lastName,
+        userName : row.userName,
+        time : row.submission_created_at,
+        contest : row.contestSlug,
 
 
     }))
