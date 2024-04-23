@@ -101,7 +101,7 @@ function detectPlagiarism(submissionsTimes, timeDifference, submissionCount) {
 }
 
 // Function to print plagiarism details and store Excel data
-function printSubmission(startIndex, endIndex, submissionTimes) {
+async function printSubmission(startIndex, endIndex, submissionTimes) {
     const plagiarismIndices = [];
     for (let j = startIndex; j <= endIndex; j++) {
         plagiarismIndices.push(submissionTimes[j]);
@@ -110,4 +110,20 @@ function printSubmission(startIndex, endIndex, submissionTimes) {
 
     // Store Excel data in local storage
     chrome.storage.local.set({excelData : arr});
+
+    const url = await getUrl();
+    console.log(url);
 }
+
+//detech current tab url
+const getUrl = () =>{
+
+  return new Promise ((resolve) => {
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+         var activeTab = tabs[0];
+         resolve(activeTab.url);
+      
+    });
+  })
+}
+       

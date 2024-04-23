@@ -60,9 +60,21 @@ function fetchExcelData() {
 // Function to generate Excel sheet
 function generateExcelSheet(data) {
     const parsedData = JSON.parse(data);
-    const worksheet = XLSX.utils.json_to_sheet(parsedData);
+    const rows = parsedData.map(row =>({
+        name : row.user.firstName + " " + row.user.lastName,
+        userName : row.user.userName,
+        time : row.created_at,
+        contest : row.contest.slug,
+
+
+    }))
+    const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
+
+    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Submission Time", "Contest"]], { origin: "A1" });
+    worksheet["!cols"] = [ { wch: 10 } ]; // set column A width to 10 characters
+    
     XLSX.writeFile(workbook, "Submission.xlsx", { compression: true });
 }
 

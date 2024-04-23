@@ -3,7 +3,7 @@
   "name": "Plag Detection",
   "version": "1.0",
   "description": "Plag Detection",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "tabs"],
   "action": {
     "default_popup": "popup/popup.html"
   },
@@ -13,7 +13,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://mentorpick.com/*"],
+      "matches": ["https://mentorpick.com/profile/*"],
       "js": ["./assets/xlsx/xlsx.full.min.js", "popup/popup.js"]
     }
   ]
