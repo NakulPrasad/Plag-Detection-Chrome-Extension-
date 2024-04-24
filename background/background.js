@@ -28,7 +28,7 @@
 
                         let checkPlag = await detectPlagiarismWrapper(uniqueSubmissions, timeDifference, allowedStreak);
                         if (checkPlag === 'true') {
-                            chrome.storage.local.set({ verdict: 'true' }, () => {
+                            chrome.storage.local.set({ 'verdict': 'true' }, () => {
                                 console.log('Saved Plag verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'true' });
                             });
@@ -36,15 +36,18 @@
                         }
                         else if (checkPlag === 'unsure') {
                             // console.log(checkPlag);
-                            chrome.storage.local.set({ verdict: 'unsure' }, () => {
+                            chrome.storage.local.set({ 'verdict': 'unsure' }, () => {
                                 console.log('Saved Unsure verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'unsure' });
                             });
                         }
                         else {
-                            chrome.storage.local.set({ verdict: 'false' }, () => {
+                            chrome.storage.local.set({ 'verdict': 'false' }, () => {
                                 console.log('Saved No Plag verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'false' });
+                                chrome.storage.local.clear(() => {
+                                    console.log('Local Storage Cleared');
+                                });
                             });
                         }
                     }
@@ -54,12 +57,12 @@
                 }
             }
             else if (req.action === 'getExcelData') {
-                chrome.storage.local.get('excelData', (result) => {
+                chrome.storage.local.get(['excelData', 'verdict'], (result) => {
                     console.log(result.excelData);
-                    // console.log(result.verdict);
+                    console.log(result.verdict);
                     sendResponse(result.excelData);
                 });
-                return true;
+           
             }
         });
     }
@@ -116,9 +119,6 @@ async function detectPlagiarism(submissions, deltaGap, allowedStreak) {
         console.log(occurrences);
         chrome.storage.local.set({ 'excelData': occurrences }, () => {
             console.log('Data saved to local storage');
-        });
-        chrome.storage.local.get('excelData', (result) => {
-            console.log(result.excelData);
         });
     } else {
         console.log("Empty occurrences");

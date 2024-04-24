@@ -47,11 +47,12 @@ function showVerdict(verdict) {
 function fetchExcelData() {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ action: "getExcelData" }, (res) => {
-            console.log(res);
             if (chrome.runtime.lastError) {
                 reject(chrome.runtime.lastError);
             } else {
-                resolve(res);
+                console.log(res.verdict);
+                console.log(res.excelData);
+                resolve({excelData : res.excelData, verdict : res.verdict});
             }
         });
     });
@@ -85,14 +86,16 @@ function generateExcelSheet(data) {
 function handleDownload() {
     fetchExcelData()
         .then(data => {
-            processData(data);
-        }).then(data => {
-            generateExcelSheet(data);
-
+            console.log(data);
+            return processData(data.excelData);
         })
-        .catch(error => {
-            console.error("Failed to fetch Excel data:", error);
-        });
+        .then(res => {
+            console.log(res);
+            generateExcelSheet(res.data, res.verdict);
+        })
+        // .catch(error => {
+        //     console.error("Failed to fetch Excel data:", error);
+        // });
 }
 
 function processData(data) {
@@ -116,7 +119,7 @@ function processData(data) {
         // Convert the flattened array to JSON format
         const flattenedJSON = JSON.stringify(flattenedArray);
         console.log(flattenedJSON);
-        resolve(flattenedJSON);
+        resolve({ data: flattenedJSON, verdict: data.verdict });
     })
 
 }
