@@ -15,12 +15,12 @@ chrome.runtime.onMessage.addListener((req) => {
 
 // Function to handle submission of input values
 function handleSubmit() {
-    const submissionCount = document.getElementById("submissionCount").value;
+    const allowedStreak = document.getElementById("allowedStreak").value;
     const timeDifference = document.getElementById("timeDifference").value;
 
     chrome.runtime.sendMessage({
         action: 'checkPlag',
-        submissionCount,
+        allowedStreak,
         timeDifference
     });
 
@@ -47,10 +47,11 @@ function showVerdict(verdict) {
 function fetchExcelData() {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ action: "getExcelData" }, (res) => {
+            console.log(res);
             if (chrome.runtime.lastError) {
                 reject(chrome.runtime.lastError);
             } else {
-                resolve(res.excelData);
+                resolve(res);
             }
         });
     });
@@ -83,8 +84,8 @@ function generateExcelSheet(data) {
 // Function to handle download button click
 function handleDownload() {
     fetchExcelData()
-        .then((data) => {
-            return processData(data);
+        .then(data => {
+            processData(data);
         }).then(data => {
             generateExcelSheet(data);
 
@@ -96,14 +97,19 @@ function handleDownload() {
 
 function processData(data) {
     return new Promise((resolve, reject) => {
-        
         // Flatten the array of arrays into a single array of objects
         const flattenedArray = data.reduce((acc, curr, index, array) => {
             // Concatenate the current array to the accumulator
             acc = acc.concat(curr);
             // If it's not the last array, insert a blank object after concatenating
             if (index !== array.length - 1) {
-                acc.push({}); // Insert a blank object
+                acc.push({
+                    name: "",
+                    userName: "",
+                    problem: "",
+                    time: "",
+                    contest: "",
+                }); // Insert a blank object
             }
             return acc;
         }, []);
