@@ -4,6 +4,10 @@
             console.log('Local Storage Cleared');
         });
 
+        // Fetch data from API endpoint
+        // const res = await fetch("https://mentorpick.com/api/courseV2/contest/submission/my?problem=&verdictString=ACCEPTED&contestSlug=bz-bvrith-y22-phase-1-week-1-practice&language=&limit=100&page=1&user=23wh5a0515-jangili&courseId=65fadb136edf77d59a861c05&contestId=5384ef75-30ae-4101-bfd8-7a7645869000");
+
+
         const res = await fetch(chrome.runtime.getURL('./submission.json'));
 
         if (!res.ok) {
