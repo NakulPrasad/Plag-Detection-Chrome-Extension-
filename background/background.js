@@ -56,14 +56,6 @@
                     console.error(error);
                 }
             }
-            else if (req.action === 'getExcelData') {
-                chrome.storage.local.get(['excelData', 'verdict'], (result) => {
-                    console.log(result.excelData);
-                    console.log(result.verdict);
-                    sendResponse(result.excelData);
-                });
-           
-            }
         });
     }
     catch (error) {

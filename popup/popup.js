@@ -1,8 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("checkPlag").addEventListener("click", () => {
+        console.log("check clicked");
         handleSubmit();
     });
+});
+document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("download").addEventListener("click", () => {
+        console.log("download clicked");
         handleDownload();
     });
 });
@@ -44,15 +48,14 @@ function showVerdict(verdict) {
 }
 
 // Function to fetch Excel data
-function fetchExcelData() {
+async function fetchExcelData() {
     return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: "getExcelData" }, (res) => {
+        chrome.storage.local.get(['excelData', 'verdict'], (result) => {
             if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message);
                 reject(chrome.runtime.lastError);
             } else {
-                console.log(res.verdict);
-                console.log(res.excelData);
-                resolve({excelData : res.excelData, verdict : res.verdict});
+                resolve(result);
             }
         });
     });
@@ -60,7 +63,7 @@ function fetchExcelData() {
 
 // Function to generate Excel sheet
 function generateExcelSheet(data) {
-    const parsedData = JSON.parse(data);
+    const parsedData = JSON.parse(data.excelData);
     const rows = parsedData.map(row => ({
         name: row.firstName + " " + row.lastName,
         userName: row.userName,
@@ -74,7 +77,7 @@ function generateExcelSheet(data) {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
 
-    XLSX.utils.sheet_add_aoa(worksheet, [["", "Verdict:", "verdict", "", ""]], { origin: "A1" });
+    XLSX.utils.sheet_add_aoa(worksheet, [["", "Verdict:", data.verdict, "", ""]], { origin: "A1" });
     XLSX.utils.sheet_add_aoa(worksheet, [["", "", "", "", ""]], { origin: "A2" });
     XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Problem Title", "Submission Time", "Contest"]], { origin: "A3" });
     worksheet["!cols"] = [{ wch: 10 }]; // set column A width to 10 characters
@@ -86,40 +89,57 @@ function generateExcelSheet(data) {
 function handleDownload() {
     fetchExcelData()
         .then(data => {
-            console.log(data);
-            return processData(data.excelData);
+            return processData(data);
         })
         .then(res => {
             console.log(res);
-            generateExcelSheet(res.data, res.verdict);
+            generateExcelSheet(res);
         })
-        // .catch(error => {
-        //     console.error("Failed to fetch Excel data:", error);
-        // });
+        .catch(error => {
+            console.error("Failed to fetch Excel data", error);
+        });
 }
 
 function processData(data) {
     return new Promise((resolve, reject) => {
         // Flatten the array of arrays into a single array of objects
-        const flattenedArray = data.reduce((acc, curr, index, array) => {
+        console.log(data.excelData);
+        const flattenedArray = data.excelData.reduce((acc, curr, index, array) => {
             // Concatenate the current array to the accumulator
             acc = acc.concat(curr);
             // If it's not the last array, insert a blank object after concatenating
             if (index !== array.length - 1) {
                 acc.push({
-                    name: "",
-                    userName: "",
-                    problem: "",
-                    time: "",
-                    contest: "",
+                    "contestId": "",
+                    "contestSlug": "",
+                    "courseId": null,
+                    "courseV2Id": "",
+                    "firstName": "",
+                    "lastName": "",
+                    "problemId": "",
+                    "problemSlug": "",
+                    "problemTitle": "",
+                    "sectionId": null,
+                    "submission_chapterId": null,
+                    "submission_created_at": "",
+                    "submission_id": "",
+                    "submission_inContest": null,
+                    "submission_isPolling": null,
+                    "submission_language": "",
+                    "submission_score": null,
+                    "submission_tokens": null,
+                    "submission_verdictCode": "",
+                    "submission_verdictString": "",
+                    "userId": "",
+                    "userName": ""
                 }); // Insert a blank object
             }
             return acc;
         }, []);
         // Convert the flattened array to JSON format
+        console.log(flattenedArray);
         const flattenedJSON = JSON.stringify(flattenedArray);
-        console.log(flattenedJSON);
-        resolve({ data: flattenedJSON, verdict: data.verdict });
+        resolve({ excelData: flattenedJSON, verdict: data.verdict });
     })
 
 }
