@@ -3,7 +3,7 @@
   "name": "Plag Detection",
   "version": "1.0",
   "description": "Plag Detection",
-  "permissions": ["activeTab", "storage", "tabs"],
+  "permissions": ["activeTab", "storage", "tabs", "sidePanel"],
   "action": {
     "default_popup": "popup/popup.html"
   },
@@ -16,5 +16,8 @@
       "matches": ["https://mentorpick.com/profile/*"],
       "js": ["./assets/xlsx/xlsx.full.min.js", "./assets/bootstrap/bootstrap.bundle.min.js","popup/popup.js", "popup/floatingButton.js"]
     }
-  ]
+  ],
+  "side_panel": {
+    "default_path": "popup/popup.html"
+  }
 }

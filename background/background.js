@@ -14,9 +14,10 @@ async function start(apiData) {
 
         // const apiData = await res.json();
 
-        const uniqueSubmissions = await removeDuplicates(apiData.data, "problemTitle");
-
+        const uniqueSubmissions = await removeDuplicates(apiData.data, "problemSlug");
         console.log(uniqueSubmissions);
+        // console.log(acceptedSubmissions);
+
 
         let timeDifference;
         let allowedStreak;
@@ -129,34 +130,62 @@ async function removeDuplicates(submissions, field) {
     }, new Map());
 
     const uniqueSubmissionsArray = Array.from(uniqueSubmissionsMap.values());
-    uniqueSubmissionsArray.sort((a, b) => {
+    const acceptedSubmissions = uniqueSubmissionsArray.filter(submission => submission.submission_verdictCode === '1');
+
+    acceptedSubmissions.sort((a, b) => {
         const timeA = Date.parse(a.submission_created_at);
         const timeB = Date.parse(b.submission_created_at);
         return timeA - timeB;
     });
 
-    return uniqueSubmissionsArray;
+    return acceptedSubmissions;
 }
 
 
 // Listen for messages from the content script to load api
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.message === "matching_url_opened") {
-        // Get the profile ID from the message
-        var profileId = message.profileId;
+        const profileId = message.profileId;
         
-        // Call your API with the profile ID
-        fetch('https://mentorpick.com/api/submission?limit=100&page=1&user=' + profileId)
-            .then(response => response.json())
+        fetchSubmissions(profileId)
             .then(data => {
                 console.log("API Response:", data);
-                // console.log("API Response:", data.data);
                 start(data);
-                // processData(data);
-                // You can do further processing with the API response here
+
             })
             .catch(error => {
                 console.error("API Error:", error);
             });
     }
 });
+
+async function fetchSubmissions(profileId) {
+    let page = 1;
+    const response = await fetch(`https://mentorpick.com/api/submission?limit=100&page=${page}&user=${profileId}`);
+    const data = await response.json();
+
+    return data;
+}
+
+// async function fetchSubmissions(profileId) {
+//     let page = 1;
+//     let allSubmissions = [];
+
+//     while (true) {
+//         const response = await fetch(`https://mentorpick.com/api/submission?limit=100&page=${page}&user=${profileId}`);
+//         const data = await response.json();
+
+//         if (data.length === 0) {
+//             break; // Break the loop if no more data
+//         }
+
+//         for (let i = 0; i < data.length; i++) {
+//             allSubmissions.push(data[i]);
+//         }
+
+//         page++;
+//     }
+
+//     console.log(allSubmissions);
+//     return allSubmissions;
+// }

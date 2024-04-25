@@ -3,36 +3,36 @@ function checkUrlAndCallApi() {
 
     if (currentUrl.startsWith('https://mentorpick.com/profile/')) {
         const profileId = currentUrl.split('profile/')[1];
-        insertButton();
+        // insertButton();
         chrome.runtime.sendMessage({ message: "matching_url_opened", profileId: profileId });
     }
 }
 
 checkUrlAndCallApi();
 
-function insertButton() {
-    const checkInterval = setInterval(() => {
-        const header = document.querySelectorAll('#root > div:nth-child(2) > div > div > div.mantine-Col-root.mantine-cpanvy > div > div.mantine-Paper-root.mantine-1gi5o8w')[0];
-        if (header) {
-            clearInterval(checkInterval)
-            let newButton = document.createElement('button');
-            newButton.id = "checkPlag";
-            newButton.textContent = "Check Plag";
-            newButton.style.backgroundColor = "Red";
-            newButton.style.cursor = 'pointer'
-            header.appendChild(newButton);
+// function insertButton() {
+//     const checkInterval = setInterval(() => {
+//         const header = document.querySelectorAll('#root > div:nth-child(2) > div > div > div.mantine-Col-root.mantine-cpanvy > div > div.mantine-Paper-root.mantine-1gi5o8w')[0];
+//         if (header) {
+//             clearInterval(checkInterval)
+//             let newButton = document.createElement('button');
+//             newButton.id = "checkPlag";
+//             newButton.textContent = "Check Plag";
+//             newButton.style.backgroundColor = "Red";
+//             newButton.style.cursor = 'pointer'
+//             header.appendChild(newButton);
 
-            const modalHTML = createModal();
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
+//             const modalHTML = createModal();
+//             document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-            newButton.addEventListener('click', () => {
-                handleClick();
-            })
+//             newButton.addEventListener('click', () => {
+//                 handleClick();
+//             })
 
-        }
-    }, 5000);
+//         }
+//     }, 5000);
 
-}
+// }
 
 // function handleClick() {
 //     const myModal = new bootstrap.Modal(document.getElementById('myModal'), {});
