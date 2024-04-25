@@ -1,20 +1,18 @@
-(async () => {
+
+async function start(apiData) {
     try {
-        chrome.storage.local.clear(() => {
-            console.log('Local Storage Cleared');
-        });
 
         // Fetch data from API endpoint
         // const res = await fetch("https://mentorpick.com/api/courseV2/contest/submission/my?problem=&verdictString=ACCEPTED&contestSlug=bz-bvrith-y22-phase-1-week-1-practice&language=&limit=100&page=1&user=23wh5a0515-jangili&courseId=65fadb136edf77d59a861c05&contestId=5384ef75-30ae-4101-bfd8-7a7645869000");
 
 
-        const res = await fetch(chrome.runtime.getURL('./submission.json'));
+        // const res = await fetch(chrome.runtime.getURL('./submission.json'));
 
-        if (!res.ok) {
-            throw new Error('Failed to fetch API data');
-        }
+        // if (!res.ok) {
+        //     throw new Error('Failed to fetch API data');
+        // }
 
-        const apiData = await res.json();
+        // const apiData = await res.json();
 
         const uniqueSubmissions = await removeDuplicates(apiData.data, "problemTitle");
 
@@ -49,9 +47,6 @@
                             chrome.storage.local.set({ 'verdict': 'false' }, () => {
                                 console.log('Saved No Plag verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'false' });
-                                chrome.storage.local.clear(() => {
-                                    console.log('Local Storage Cleared');
-                                });
                             });
                         }
                     }
@@ -66,7 +61,7 @@
         console.error("Error", error);
         throw error;
     }
-})();
+}
 
 async function detectPlagiarismWrapper(submissions, deltaGap, allowedStreak) {
     // console.log("Plagiarism wrapper");
@@ -155,7 +150,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
             .then(response => response.json())
             .then(data => {
                 console.log("API Response:", data);
-                
+                // console.log("API Response:", data.data);
+                start(data);
                 // processData(data);
                 // You can do further processing with the API response here
             })
@@ -164,5 +160,3 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
             });
     }
 });
-
-
