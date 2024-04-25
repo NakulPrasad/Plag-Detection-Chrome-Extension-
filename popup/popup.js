@@ -1,3 +1,16 @@
+(async () => {
+    let allowedStreakValue = localStorage.getItem("allowedStreak");
+    let timeDifferenceValue = localStorage.getItem("timeDifference");
+
+    if (allowedStreakValue !== null) {
+        document.getElementById("allowedStreak").value = allowedStreakValue;
+    }
+
+    if (timeDifferenceValue !== null) {
+        document.getElementById("timeDifference").value = timeDifferenceValue;
+    }
+})();
+
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("checkPlag").addEventListener("click", () => {
         console.log("check clicked");
@@ -22,12 +35,17 @@ function handleSubmit() {
     const allowedStreak = document.getElementById("allowedStreak").value;
     const timeDifference = document.getElementById("timeDifference").value;
 
-    chrome.runtime.sendMessage({
-        action: 'checkPlag',
-        allowedStreak,
-        timeDifference
-    });
+    if (allowedStreak && timeDifference) {
+        chrome.runtime.sendMessage({
+            action: 'checkPlag',
+            allowedStreak,
+            timeDifference
+        });
 
+        chrome.storage.local.set({ 'allowedStreak': allowedStreak, 'timeDifference': timeDifference }, () => {
+            console.log('Saved values to ls');
+        });
+    }
 
 }
 
@@ -74,12 +92,13 @@ function generateExcelSheet(data) {
 
     }))
     const worksheet = XLSX.utils.json_to_sheet(rows);
+    console.log(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
 
-    XLSX.utils.sheet_add_aoa(worksheet, [["", "Verdict:", data.verdict, "", ""]], { origin: "A1" });
-    XLSX.utils.sheet_add_aoa(worksheet, [["", "", "", "", ""]], { origin: "A2" });
-    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Problem Title", "Submission Time", "Contest"]], { origin: "A3" });
+    // XLSX.utils.sheet_add_aoa(worksheet, [["", "Verdict:", data.verdict, "", ""]], { origin: "A1" });
+    // XLSX.utils.sheet_add_aoa(worksheet, [["", "", "", "", ""]], { origin: "A2" });
+    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Problem Title", "Submission Time", "Contest"]], { origin: "A1" });
     worksheet["!cols"] = [{ wch: 10 }]; // set column A width to 10 characters
 
     XLSX.writeFile(workbook, "Submission.xlsx", { compression: true });
@@ -112,22 +131,22 @@ function processData(data) {
                 acc.push({
                     "contestId": "",
                     "contestSlug": "",
-                    "courseId": null,
+                    "courseId": "",
                     "courseV2Id": "",
                     "firstName": "",
                     "lastName": "",
                     "problemId": "",
                     "problemSlug": "",
                     "problemTitle": "",
-                    "sectionId": null,
-                    "submission_chapterId": null,
+                    "sectionId": "",
+                    "submission_chapterId": "",
                     "submission_created_at": "",
                     "submission_id": "",
-                    "submission_inContest": null,
-                    "submission_isPolling": null,
+                    "submission_inContest": "",
+                    "submission_isPolling": "",
                     "submission_language": "",
-                    "submission_score": null,
-                    "submission_tokens": null,
+                    "submission_score": "",
+                    "submission_tokens": "",
                     "submission_verdictCode": "",
                     "submission_verdictString": "",
                     "userId": "",
