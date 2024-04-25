@@ -14,7 +14,7 @@
   "content_scripts": [
     {
       "matches": ["https://mentorpick.com/*"],
-      "js": ["./assets/xlsx/xlsx.full.min.js", "popup/popup.js", "popup/floatingButton.js"]
+      "js": ["./assets/xlsx/xlsx.full.min.js", "./assets/bootstrap/bootstrap.bundle.min.js","popup/popup.js", "popup/floatingButton.js"]
     }
   ]
 }

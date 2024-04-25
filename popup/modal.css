@@ -1,0 +1,10 @@
+/* styles.css */
+.modal-header {
+    background-color: #f8f9fa;
+}
+.modal-title {
+    color: #343a40;
+}
+.close {
+    color: #343a40;
+}

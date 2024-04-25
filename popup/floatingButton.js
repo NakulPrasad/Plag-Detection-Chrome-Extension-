@@ -23,7 +23,8 @@ function insertButton() {
             newButton.style.cursor = 'pointer'
             header.appendChild(newButton);
 
-            const modal = new bootstrap.Modal(document.getElementById("modal"))
+            const modalHTML = createModal();
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
 
             newButton.addEventListener('click', () => {
                 handleClick();
@@ -34,7 +35,33 @@ function insertButton() {
 
 }
 
-function handleClick(){
+function handleClick() {
+    const myModal = new bootstrap.Modal(document.getElementById('myModal'), {});
+    myModal.show();
     console.log('show modal');
 
+}
+
+function createModal() {
+    return `
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Modal Title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>hiii</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
 }
