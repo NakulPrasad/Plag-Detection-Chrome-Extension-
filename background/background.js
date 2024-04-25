@@ -1,56 +1,62 @@
-let apiData;
-
 (async () => {
     try {
-        // Fetch data from API endpoint
-        const res = await fetch("https://mentorpick.com/api/courseV2/contest/submission/my?problem=&verdictString=ACCEPTED&contestSlug=bz-bvrith-y22-phase-1-week-1-practice&language=&limit=100&page=1&user=23wh5a0515-jangili&courseId=65fadb136edf77d59a861c05&contestId=5384ef75-30ae-4101-bfd8-7a7645869000");
+        chrome.storage.local.clear(() => {
+            console.log('Local Storage Cleared');
+        });
+
+        const res = await fetch(chrome.runtime.getURL('./submission.json'));
 
         if (!res.ok) {
-            throw new Error('Failed to get api');
+            throw new Error('Failed to fetch API data');
         }
-        apiData = await res.json();
 
-        // Remove duplicate submissions based on problem
-        const uniqueSubmissions = removeDuplicates(apiData.data, "problem");
+        const apiData = await res.json();
 
-        // Sort submissions by creation time
-        if (uniqueSubmissions) {
-            uniqueSubmissions.sort((a, b) => {
-                const timeA = Date.parse(a.created_at);
-                const timeB = Date.parse(b.created_at);
-                return timeA - timeB;
-            });
-        }
+        const uniqueSubmissions = await removeDuplicates(apiData.data, "problemTitle");
+
+        console.log(uniqueSubmissions);
 
         let timeDifference;
-        let submissionCount;
+        let allowedStreak;
 
-        // Listen for messages from background.js
-        chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
+        chrome.runtime.onMessage.addListener(async (req, sender, sendResponse) => {
             if (req.action === 'checkPlag') {
-                if (req.submissionCount && req.timeDifference) {
-                    // Get submission count and time difference from message
-                    submissionCount = req.submissionCount;
-                    timeDifference = req.timeDifference;
+                try {
+                    if (req.allowedStreak && req.timeDifference) {
+                        allowedStreak = req.allowedStreak;
+                        timeDifference = req.timeDifference;
 
-                    // Check for plagiarism
-                    const checkPlag = detectPlagiarism(uniqueSubmissions, timeDifference, submissionCount);
-                    console.log(checkPlag);
-                    if (checkPlag) {
-                        // Send plagiarism verdict to background.js
-                        chrome.runtime.sendMessage({ action :'verdict' ,verdict: checkPlag });
+                        let checkPlag = await detectPlagiarismWrapper(uniqueSubmissions, timeDifference, allowedStreak);
+                        if (checkPlag === 'true') {
+                            chrome.storage.local.set({ 'verdict': 'true' }, () => {
+                                console.log('Saved Plag verdict to ls');
+                                chrome.runtime.sendMessage({ action: 'verdict', verdict: 'true' });
+                            });
+                            // console.log(checkPlag);
+                        }
+                        else if (checkPlag === 'unsure') {
+                            // console.log(checkPlag);
+                            chrome.storage.local.set({ 'verdict': 'unsure' }, () => {
+                                console.log('Saved Unsure verdict to ls');
+                                chrome.runtime.sendMessage({ action: 'verdict', verdict: 'unsure' });
+                            });
+                        }
+                        else {
+                            chrome.storage.local.set({ 'verdict': 'false' }, () => {
+                                console.log('Saved No Plag verdict to ls');
+                                chrome.runtime.sendMessage({ action: 'verdict', verdict: 'false' });
+                                chrome.storage.local.clear(() => {
+                                    console.log('Local Storage Cleared');
+                                });
+                            });
+                        }
                     }
+
+                } catch (error) {
+                    console.error(error);
                 }
             }
-            else if(req.action === 'getExcelData'){
-                // Retrieve Excel data from local storage
-                chrome.storage.local.get('excelData', (result)=>{
-                    console.log(result.excelData);
-                    sendResponse({excelData : result.excelData});
-                });
-                return true;
-            }
-        })
+        });
     }
     catch (error) {
         console.error("Error", error);
@@ -58,72 +64,77 @@ let apiData;
     }
 })();
 
-// Function to remove duplicate submissions
-function removeDuplicates(submissions, field) {
-    const uniqueSubmissions = submissions.reduce((acc, curr) => {
-        const fieldValue = curr[field].title;
+async function detectPlagiarismWrapper(submissions, deltaGap, allowedStreak) {
+    // console.log("Plagiarism wrapper");
+    let checkPlag = await detectPlagiarism(submissions, deltaGap, allowedStreak);
+
+    if (checkPlag === 'false') {
+        const allowedStreakNew = Math.max(1, Math.floor(allowedStreak / 2));
+
+        console.log(`Rerunning with allowedStreak: ${allowedStreakNew}`);
+
+        checkPlag = await detectPlagiarism(submissions, deltaGap, allowedStreakNew);
+        return (checkPlag === 'true') ? "unsure" : "false";
+    }
+
+    return checkPlag;
+}
+
+async function detectPlagiarism(submissions, deltaGap, allowedStreak) {
+    const n = submissions.length;
+    let startIndex = 0;
+    let endIndex = 0;
+    let currentStreak = 0;
+    let occurrences = [];
+
+    for (let i = 0; i < n - 1; i++) {
+        const timeDiff = Date.parse(submissions[i + 1].submission_created_at) - Date.parse(submissions[i].submission_created_at);
+        if (timeDiff <= deltaGap * 60000) {
+            currentStreak++;
+            if (currentStreak === 1) {
+                startIndex = i;
+            }
+            endIndex = i + 1;
+        } else {
+            if (currentStreak >= allowedStreak) {
+                occurrences.push(submissions.slice(startIndex, endIndex + 1));
+            }
+            currentStreak = 0;
+        }
+    }
+
+    if (currentStreak >= allowedStreak) {
+        occurrences.push(submissions.slice(startIndex, endIndex + 1));
+    }
+
+    if (occurrences.length > 0) {
+        console.log(occurrences);
+        chrome.storage.local.set({ 'excelData': occurrences }, () => {
+            console.log('Data saved to local storage');
+        });
+    } else {
+        console.log("Empty occurrences");
+        return 'false';
+    }
+
+    return 'true';
+}
+
+async function removeDuplicates(submissions, field) {
+    const uniqueSubmissionsMap = submissions.reduce((acc, curr) => {
+        const fieldValue = curr[field];
         if (!acc.has(fieldValue)) {
             acc.set(fieldValue, curr);
         }
         return acc;
     }, new Map());
 
-    return Array.from(uniqueSubmissions.values());
-}
-
-// Function to detect plagiarism based on time difference and submission count
-function detectPlagiarism(submissionsTimes, timeDifference, submissionCount) {
-    const n = submissionsTimes.length;
-    let submissionsInWindow = 0;
-    let startIndex = 0;
-
-    for (let i = 0; i < n; i++) {
-        while (Date.parse(submissionsTimes[i].created_at) - Date.parse(submissionsTimes[startIndex].created_at) > timeDifference * 60000) {
-            submissionsInWindow--;
-            startIndex++;
-        }
-
-        submissionsInWindow++;
-
-        if (submissionsInWindow >= Math.floor(submissionCount * 0.50) && submissionsInWindow <= submissionCount) {
-            // Print plagiarism detection details
-            printSubmission(startIndex, i, submissionsTimes);
-            return 'unsure';
-        }
-        else if (submissionsInWindow > submissionCount) {
-            // Print plagiarism detection details
-            printSubmission(startIndex, i, submissionsTimes);
-            return 'true';
-        }
-    }
-
-    return 'false';
-}
-
-// Function to print plagiarism details and store Excel data
-async function printSubmission(startIndex, endIndex, submissionTimes) {
-    const plagiarismIndices = [];
-    for (let j = startIndex; j <= endIndex; j++) {
-        plagiarismIndices.push(submissionTimes[j]);
-    }
-    const arr = JSON.stringify(plagiarismIndices);
-
-    // Store Excel data in local storage
-    chrome.storage.local.set({excelData : arr});
-
-    const url = await getUrl();
-    console.log(url);
-}
-
-//detech current tab url
-const getUrl = () =>{
-
-  return new Promise ((resolve) => {
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-         var activeTab = tabs[0];
-         resolve(activeTab.url);
-      
+    const uniqueSubmissionsArray = Array.from(uniqueSubmissionsMap.values());
+    uniqueSubmissionsArray.sort((a, b) => {
+        const timeA = Date.parse(a.submission_created_at);
+        const timeB = Date.parse(b.submission_created_at);
+        return timeA - timeB;
     });
-  })
+
+    return uniqueSubmissionsArray;
 }
-       
