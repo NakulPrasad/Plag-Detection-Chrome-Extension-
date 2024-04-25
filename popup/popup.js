@@ -11,10 +11,16 @@
     }
 })();
 
+
+
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("checkPlag").addEventListener("click", () => {
         console.log("check clicked");
+
         handleSubmit();
+
+
+
     });
 });
 document.addEventListener("DOMContentLoaded", () => {
@@ -56,12 +62,15 @@ function showVerdict(verdict) {
     switch (verdict) {
         case 'true':
             body.style.backgroundColor = "red";
+            document.getElementById('download').classList.remove('hide');
             break;
         case 'false':
             body.style.backgroundColor = "green";
+            document.getElementById('download').classList.add('hide');
             break;
         default:
             body.style.backgroundColor = "orange";
+            document.getElementById('download').classList.remove('hide');
     }
 }
 
@@ -86,6 +95,7 @@ function generateExcelSheet(data) {
         name: row.firstName + " " + row.lastName,
         userName: row.userName,
         problem: row.problemTitle,
+        verdict : row.submission_verdictString,
         time: row.submission_created_at,
         contest: row.contestSlug,
 
@@ -96,10 +106,10 @@ function generateExcelSheet(data) {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
 
-    // XLSX.utils.sheet_add_aoa(worksheet, [["", "Verdict:", data.verdict, "", ""]], { origin: "A1" });
-    // XLSX.utils.sheet_add_aoa(worksheet, [["", "", "", "", ""]], { origin: "A2" });
-    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Problem Title", "Submission Time", "Contest"]], { origin: "A1" });
-    worksheet["!cols"] = [{ wch: 10 }]; // set column A width to 10 characters
+    // XLSX.utils.sheet_add_aoa(worksheet, [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " "]], { origin: "A2" });
+    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Problem Title","Verdict", "Submission Time", "Contest"," "," "," "," "]], { origin: "A1" });
+    XLSX.utils.sheet_add_aoa(worksheet, [["Verdict:", data.verdict]], { origin: "K2" });
+    worksheet["!cols"] = [{ wch: 20 }]; // set column A width to 10 characters
 
     XLSX.writeFile(workbook, "Submission.xlsx", { compression: true });
 }
@@ -111,7 +121,6 @@ function handleDownload() {
             return processData(data);
         })
         .then(res => {
-            console.log(res);
             generateExcelSheet(res);
         })
         .catch(error => {
@@ -162,3 +171,12 @@ function processData(data) {
     })
 
 }
+
+
+// chrome.storage.onChanged.addListener((changes, namespace) => {
+//     console.log(changes);
+//     if (changes.excelData) {
+        
+
+//     }
+// })
