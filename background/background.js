@@ -1,6 +1,9 @@
 
 async function start(apiData) {
     try {
+        chrome.storage.local.clear(() => {
+            console.log('Local Storage Cleared');
+        });
 
         // Fetch data from API endpoint
         // const res = await fetch("https://mentorpick.com/api/courseV2/contest/submission/my?problem=&verdictString=ACCEPTED&contestSlug=bz-bvrith-y22-phase-1-week-1-practice&language=&limit=100&page=1&user=23wh5a0515-jangili&courseId=65fadb136edf77d59a861c05&contestId=5384ef75-30ae-4101-bfd8-7a7645869000");
@@ -14,9 +17,10 @@ async function start(apiData) {
 
         // const apiData = await res.json();
 
-        const uniqueSubmissions = await removeDuplicates(apiData.data, "problemTitle");
-
+        const uniqueSubmissions = await removeDuplicates(apiData.data, "problemSlug");
         console.log(uniqueSubmissions);
+        // console.log(acceptedSubmissions);
+
 
         let timeDifference;
         let allowedStreak;
@@ -47,6 +51,9 @@ async function start(apiData) {
                             chrome.storage.local.set({ 'verdict': 'false' }, () => {
                                 console.log('Saved No Plag verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'false' });
+                            });
+                            chrome.storage.local.clear(() => {
+                                console.log('Local Storage Cleared');
                             });
                         }
                     }
@@ -108,15 +115,77 @@ async function detectPlagiarism(submissions, deltaGap, allowedStreak) {
 
     if (occurrences.length > 0) {
         console.log(occurrences);
-        chrome.storage.local.set({ 'excelData': occurrences }, () => {
-            console.log('Data saved to local storage');
-        });
+        await saveToStorage(occurrences);
+        
     } else {
         console.log("Empty occurrences");
         return 'false';
     }
 
     return 'true';
+}
+
+async function saveToStorage(submissions){
+    await processData(submissions).then(data =>{
+        chrome.storage.local.set({ 'excelData': data }, () => {
+            console.log('submission saved to local storage');
+        });        
+    })
+
+}
+
+function processData(data) {
+    return new Promise((resolve, reject) => {
+        // Flatten the array of arrays into a single array of objects
+        console.log(data);
+        const flattenedArray = data.reduce((acc, curr, index, array) => {
+            // Concatenate the current array to the accumulator
+            acc = acc.concat(curr);
+            // If it's not the last array, insert a blank object after concatenating
+            if (index !== array.length - 1) {
+                acc.push({
+                    "contestId": "",
+                    "contestSlug": "",
+                    "courseId": "",
+                    "courseV2Id": "",
+                    "firstName": "",
+                    "lastName": "",
+                    "problemId": "",
+                    "problemSlug": "",
+                    "problemTitle": "",
+                    "sectionId": "",
+                    "submission_chapterId": "",
+                    "submission_created_at": "",
+                    "submission_id": "",
+                    "submission_inContest": "",
+                    "submission_isPolling": "",
+                    "submission_language": "",
+                    "submission_score": "",
+                    "submission_tokens": "",
+                    "submission_verdictCode": "",
+                    "submission_verdictString": "",
+                    "userId": "",
+                    "userName": ""
+                }); // Insert a blank object
+            }
+            return acc;
+        }, []);
+        // Convert the flattened array to JSON format
+        // console.log(flattenedArray);
+
+        const rows = flattenedArray.map(row => ({
+            name: row.firstName + " " + row.lastName,
+            userName: row.userName,
+            problem: row.problemTitle,
+            verdict : row.submission_verdictString,
+            time: row.submission_created_at,
+            contest: row.contestSlug,
+    
+    
+        }))
+        resolve(rows);
+    })
+
 }
 
 async function removeDuplicates(submissions, field) {
@@ -129,34 +198,62 @@ async function removeDuplicates(submissions, field) {
     }, new Map());
 
     const uniqueSubmissionsArray = Array.from(uniqueSubmissionsMap.values());
-    uniqueSubmissionsArray.sort((a, b) => {
+    const acceptedSubmissions = uniqueSubmissionsArray.filter(submission => submission.submission_verdictCode === '1');
+
+    acceptedSubmissions.sort((a, b) => {
         const timeA = Date.parse(a.submission_created_at);
         const timeB = Date.parse(b.submission_created_at);
         return timeA - timeB;
     });
 
-    return uniqueSubmissionsArray;
+    return acceptedSubmissions;
 }
 
 
 // Listen for messages from the content script to load api
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.message === "matching_url_opened") {
-        // Get the profile ID from the message
-        var profileId = message.profileId;
+        const profileId = message.profileId;
         
-        // Call your API with the profile ID
-        fetch('https://mentorpick.com/api/submission?limit=100&page=1&user=' + profileId)
-            .then(response => response.json())
+        fetchSubmissions(profileId)
             .then(data => {
                 console.log("API Response:", data);
-                // console.log("API Response:", data.data);
                 start(data);
-                // processData(data);
-                // You can do further processing with the API response here
+
             })
             .catch(error => {
                 console.error("API Error:", error);
             });
     }
 });
+
+async function fetchSubmissions(profileId) {
+    let page = 1;
+    const response = await fetch(`https://mentorpick.com/api/submission?limit=100&page=${page}&user=${profileId}`);
+    const data = await response.json();
+
+    return data;
+}
+
+// async function fetchSubmissions(profileId) {
+//     let page = 1;
+//     let allSubmissions = [];
+
+//     while (true) {
+//         const response = await fetch(`https://mentorpick.com/api/submission?limit=100&page=${page}&user=${profileId}`);
+//         const data = await response.json();
+
+//         if (data.length === 0) {
+//             break; // Break the loop if no more data
+//         }
+
+//         for (let i = 0; i < data.length; i++) {
+//             allSubmissions.push(data[i]);
+//         }
+
+//         page++;
+//     }
+
+//     console.log(allSubmissions);
+//     return allSubmissions;
+// }

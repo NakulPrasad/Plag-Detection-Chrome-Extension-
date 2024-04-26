@@ -12,12 +12,17 @@
 </head>
 
 <body>
-    <div id="extension" class="container flexbox">
-        <h2>Plag Detection</h2>
-        <input type="number" id="allowedStreak" placeholder="Submission Count">
-        <input type="number" id="timeDifference" placeholder="Time Difference">
-        <button id="checkPlag">Check Plag</button>
-        <button id="download">Download</button>
+    <div id="extension">
+        <div id='main' class="container flexbox">
+            <h2>Plag Detection</h2>
+            <input type="number" id="allowedStreak" placeholder="Submission Count">
+            <input type="number" id="timeDifference" placeholder="Time Difference">
+            <button id="checkPlag">Check Plag</button>
+            <button id="download" class="hide">Download</button>
+        </div>
+        <div id="tableContainer" class="container table-responsive" style="max-height: 500px; overflow-y: auto;">
+            
+        </div>
     </div>
 
     <script src="../assets/xlsx/xlsx.full.min.js"></script>
