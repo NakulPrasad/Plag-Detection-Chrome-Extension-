@@ -115,15 +115,77 @@ async function detectPlagiarism(submissions, deltaGap, allowedStreak) {
 
     if (occurrences.length > 0) {
         console.log(occurrences);
-        chrome.storage.local.set({ 'excelData': occurrences }, () => {
-            console.log('Data saved to local storage');
-        });
+        await saveToStorage(occurrences);
+        
     } else {
         console.log("Empty occurrences");
         return 'false';
     }
 
     return 'true';
+}
+
+async function saveToStorage(submissions){
+    await processData(submissions).then(data =>{
+        chrome.storage.local.set({ 'excelData': data }, () => {
+            console.log('submission saved to local storage');
+        });        
+    })
+
+}
+
+function processData(data) {
+    return new Promise((resolve, reject) => {
+        // Flatten the array of arrays into a single array of objects
+        console.log(data);
+        const flattenedArray = data.reduce((acc, curr, index, array) => {
+            // Concatenate the current array to the accumulator
+            acc = acc.concat(curr);
+            // If it's not the last array, insert a blank object after concatenating
+            if (index !== array.length - 1) {
+                acc.push({
+                    "contestId": "",
+                    "contestSlug": "",
+                    "courseId": "",
+                    "courseV2Id": "",
+                    "firstName": "",
+                    "lastName": "",
+                    "problemId": "",
+                    "problemSlug": "",
+                    "problemTitle": "",
+                    "sectionId": "",
+                    "submission_chapterId": "",
+                    "submission_created_at": "",
+                    "submission_id": "",
+                    "submission_inContest": "",
+                    "submission_isPolling": "",
+                    "submission_language": "",
+                    "submission_score": "",
+                    "submission_tokens": "",
+                    "submission_verdictCode": "",
+                    "submission_verdictString": "",
+                    "userId": "",
+                    "userName": ""
+                }); // Insert a blank object
+            }
+            return acc;
+        }, []);
+        // Convert the flattened array to JSON format
+        // console.log(flattenedArray);
+
+        const rows = flattenedArray.map(row => ({
+            name: row.firstName + " " + row.lastName,
+            userName: row.userName,
+            problem: row.problemTitle,
+            verdict : row.submission_verdictString,
+            time: row.submission_created_at,
+            contest: row.contestSlug,
+    
+    
+        }))
+        resolve(rows);
+    })
+
 }
 
 async function removeDuplicates(submissions, field) {

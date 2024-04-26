@@ -1,9 +1,9 @@
-#extension {
-    width: 300px;
-    height: 300px;
-}
+/* #extension {
+    width: 1024px;
+    height: 500\\px;
+} */
 
-.flexbox {
+#main {
     display: flex;
     flex-direction: column;
     vertical-align: center;
@@ -11,14 +11,14 @@
     justify-content: center;
 }
 
-#extension>input {
+#main>input {
     margin-bottom: 10px;
 }
 
-#extension>button {
+#main>button {
     margin-bottom: 10px;
 }
 
-.hide{
+.hide {
     display: none;
 }

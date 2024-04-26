@@ -56,22 +56,32 @@ function handleSubmit() {
 }
 
 // Function to display verdict
-function showVerdict(verdict) {
+async function showVerdict(verdict) {
     const body = document.body;
 
     switch (verdict) {
         case 'true':
             body.style.backgroundColor = "red";
             document.getElementById('download').classList.remove('hide');
+            fetchExcelData().then(data => {
+                populateTable(data.excelData);
+            })
             break;
         case 'false':
             body.style.backgroundColor = "green";
             document.getElementById('download').classList.add('hide');
+            fetchExcelData().then(data => {
+                populateTable(data.excelData);
+            })
             break;
         default:
             body.style.backgroundColor = "orange";
             document.getElementById('download').classList.remove('hide');
+            fetchExcelData().then(data => {
+                populateTable(data.excelData);
+            })
     }
+
 }
 
 // Function to fetch Excel data
@@ -90,24 +100,26 @@ async function fetchExcelData() {
 
 // Function to generate Excel sheet
 function generateExcelSheet(data) {
-    const parsedData = JSON.parse(data.excelData);
-    const rows = parsedData.map(row => ({
-        name: row.firstName + " " + row.lastName,
-        userName: row.userName,
-        problem: row.problemTitle,
-        verdict : row.submission_verdictString,
-        time: row.submission_created_at,
-        contest: row.contestSlug,
+    // const parsedData = JSON.parse(data.excelData);
+    // const rows = data.excelData.map(row => ({
+    //     name: row.firstName + " " + row.lastName,
+    //     userName: row.userName,
+    //     problem: row.problemTitle,
+    //     verdict: row.submission_verdictString,
+    //     time: row.submission_created_at,
+    //     contest: row.contestSlug,
 
 
-    }))
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    console.log(rows);
+    // }))
+
+
+    const worksheet = XLSX.utils.json_to_sheet(data.excelData);
+    // console.log(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
 
     // XLSX.utils.sheet_add_aoa(worksheet, [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " "]], { origin: "A2" });
-    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Problem Title","Verdict", "Submission Time", "Contest"," "," "," "," "]], { origin: "A1" });
+    XLSX.utils.sheet_add_aoa(worksheet, [["Name", "UserName", "Problem Title", "Verdict", "Submission Time", "Contest", " ", " ", " ", " "]], { origin: "A1" });
     XLSX.utils.sheet_add_aoa(worksheet, [["Verdict:", data.verdict]], { origin: "K2" });
     worksheet["!cols"] = [{ wch: 20 }]; // set column A width to 10 characters
 
@@ -117,9 +129,6 @@ function generateExcelSheet(data) {
 // Function to handle download button click
 function handleDownload() {
     fetchExcelData()
-        .then(data => {
-            return processData(data);
-        })
         .then(res => {
             generateExcelSheet(res);
         })
@@ -128,55 +137,79 @@ function handleDownload() {
         });
 }
 
-function processData(data) {
+// function processData(data) {
+//     return new Promise((resolve, reject) => {
+//         // Flatten the array of arrays into a single array of objects
+//         console.log(data.excelData);
+//         const flattenedArray = data.excelData.reduce((acc, curr, index, array) => {
+//             // Concatenate the current array to the accumulator
+//             acc = acc.concat(curr);
+//             // If it's not the last array, insert a blank object after concatenating
+//             if (index !== array.length - 1) {
+//                 acc.push({
+//                     "contestId": "",
+//                     "contestSlug": "",
+//                     "courseId": "",
+//                     "courseV2Id": "",
+//                     "firstName": "",
+//                     "lastName": "",
+//                     "problemId": "",
+//                     "problemSlug": "",
+//                     "problemTitle": "",
+//                     "sectionId": "",
+//                     "submission_chapterId": "",
+//                     "submission_created_at": "",
+//                     "submission_id": "",
+//                     "submission_inContest": "",
+//                     "submission_isPolling": "",
+//                     "submission_language": "",
+//                     "submission_score": "",
+//                     "submission_tokens": "",
+//                     "submission_verdictCode": "",
+//                     "submission_verdictString": "",
+//                     "userId": "",
+//                     "userName": ""
+//                 }); // Insert a blank object
+//             }
+//             return acc;
+//         }, []);
+//         // Convert the flattened array to JSON format
+//         console.log(flattenedArray);
+//         const flattenedJSON = JSON.stringify(flattenedArray);
+//         resolve({ excelData: flattenedJSON, verdict: data.verdict });
+//     })
+
+// }
+
+async function populateTable(data) {
     return new Promise((resolve, reject) => {
-        // Flatten the array of arrays into a single array of objects
-        console.log(data.excelData);
-        const flattenedArray = data.excelData.reduce((acc, curr, index, array) => {
-            // Concatenate the current array to the accumulator
-            acc = acc.concat(curr);
-            // If it's not the last array, insert a blank object after concatenating
-            if (index !== array.length - 1) {
-                acc.push({
-                    "contestId": "",
-                    "contestSlug": "",
-                    "courseId": "",
-                    "courseV2Id": "",
-                    "firstName": "",
-                    "lastName": "",
-                    "problemId": "",
-                    "problemSlug": "",
-                    "problemTitle": "",
-                    "sectionId": "",
-                    "submission_chapterId": "",
-                    "submission_created_at": "",
-                    "submission_id": "",
-                    "submission_inContest": "",
-                    "submission_isPolling": "",
-                    "submission_language": "",
-                    "submission_score": "",
-                    "submission_tokens": "",
-                    "submission_verdictCode": "",
-                    "submission_verdictString": "",
-                    "userId": "",
-                    "userName": ""
-                }); // Insert a blank object
-            }
-            return acc;
-        }, []);
-        // Convert the flattened array to JSON format
-        console.log(flattenedArray);
-        const flattenedJSON = JSON.stringify(flattenedArray);
-        resolve({ excelData: flattenedJSON, verdict: data.verdict });
-    })
+        const table = document.createElement('table');
+        table.className = 'table'; // Add Bootstrap table class
 
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        Object.keys(data[0]).forEach(key => {
+            const th = document.createElement('th');
+            th.textContent = key;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            Object.values(item).forEach(value => {
+                const td = document.createElement('td');
+                td.textContent = value;
+                row.appendChild(td);
+            });
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        // Append the table to the container in the HTML
+        document.getElementById('tableContainer').appendChild(table);
+        resolve();
+    });
 }
-
-
-// chrome.storage.onChanged.addListener((changes, namespace) => {
-//     console.log(changes);
-//     if (changes.excelData) {
-        
-
-//     }
-// })
