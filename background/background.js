@@ -1,26 +1,11 @@
-
 async function start(apiData) {
     try {
         chrome.storage.local.clear(() => {
-            console.log('Local Storage Cleared');
+            // console.log('Local Storage Cleared');
         });
 
-        // Fetch data from API endpoint
-        // const res = await fetch("https://mentorpick.com/api/courseV2/contest/submission/my?problem=&verdictString=ACCEPTED&contestSlug=bz-bvrith-y22-phase-1-week-1-practice&language=&limit=100&page=1&user=23wh5a0515-jangili&courseId=65fadb136edf77d59a861c05&contestId=5384ef75-30ae-4101-bfd8-7a7645869000");
-
-
-        // const res = await fetch(chrome.runtime.getURL('./submission.json'));
-
-        // if (!res.ok) {
-        //     throw new Error('Failed to fetch API data');
-        // }
-
-        // const apiData = await res.json();
-
         const uniqueSubmissions = await removeDuplicates(apiData.data, "problemSlug");
-        console.log(uniqueSubmissions);
-        // console.log(acceptedSubmissions);
-
+        // console.log(uniqueSubmissions);
 
         let timeDifference;
         let allowedStreak;
@@ -35,25 +20,25 @@ async function start(apiData) {
                         let checkPlag = await detectPlagiarismWrapper(uniqueSubmissions, timeDifference, allowedStreak);
                         if (checkPlag === 'true') {
                             chrome.storage.local.set({ 'verdict': 'true' }, () => {
-                                console.log('Saved Plag verdict to ls');
+                                // console.log('Saved Plag verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'true' });
                             });
-                            // console.log(checkPlag);
+
                         }
                         else if (checkPlag === 'unsure') {
-                            // console.log(checkPlag);
+ 
                             chrome.storage.local.set({ 'verdict': 'unsure' }, () => {
-                                console.log('Saved Unsure verdict to ls');
+                                // console.log('Saved Unsure verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'unsure' });
                             });
                         }
                         else {
                             chrome.storage.local.set({ 'verdict': 'false' }, () => {
-                                console.log('Saved No Plag verdict to ls');
+                                // console.log('Saved No Plag verdict to ls');
                                 chrome.runtime.sendMessage({ action: 'verdict', verdict: 'false' });
                             });
                             chrome.storage.local.clear(() => {
-                                console.log('Local Storage Cleared');
+                                // console.log('Local Storage Cleared');
                             });
                         }
                     }
@@ -77,7 +62,7 @@ async function detectPlagiarismWrapper(submissions, deltaGap, allowedStreak) {
     if (checkPlag === 'false') {
         const allowedStreakNew = Math.max(1, Math.floor(allowedStreak / 2));
 
-        console.log(`Rerunning with allowedStreak: ${allowedStreakNew}`);
+        // console.log(`Rerunning with allowedStreak: ${allowedStreakNew}`);
 
         checkPlag = await detectPlagiarism(submissions, deltaGap, allowedStreakNew);
         return (checkPlag === 'true') ? "unsure" : "false";
@@ -114,11 +99,11 @@ async function detectPlagiarism(submissions, deltaGap, allowedStreak) {
     }
 
     if (occurrences.length > 0) {
-        console.log(occurrences);
+        // console.log(occurrences);
         await saveToStorage(occurrences);
         
     } else {
-        console.log("Empty occurrences");
+        // console.log("Empty occurrences");
         return 'false';
     }
 
@@ -128,7 +113,7 @@ async function detectPlagiarism(submissions, deltaGap, allowedStreak) {
 async function saveToStorage(submissions){
     await processData(submissions).then(data =>{
         chrome.storage.local.set({ 'excelData': data }, () => {
-            console.log('submission saved to local storage');
+            // console.log('submission saved to local storage');
         });        
     })
 
@@ -137,11 +122,11 @@ async function saveToStorage(submissions){
 function processData(data) {
     return new Promise((resolve, reject) => {
         // Flatten the array of arrays into a single array of objects
-        console.log(data);
+        // console.log(data);
         const flattenedArray = data.reduce((acc, curr, index, array) => {
             // Concatenate the current array to the accumulator
             acc = acc.concat(curr);
-            // If it's not the last array, insert a blank object after concatenating
+
             if (index !== array.length - 1) {
                 acc.push({
                     "contestId": "",
@@ -170,8 +155,6 @@ function processData(data) {
             }
             return acc;
         }, []);
-        // Convert the flattened array to JSON format
-        // console.log(flattenedArray);
 
         const rows = flattenedArray.map(row => ({
             name: row.firstName + " " + row.lastName,
@@ -217,7 +200,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         
         fetchSubmissions(profileId)
             .then(data => {
-                console.log("API Response:", data);
+                // console.log("API Response:", data);
                 start(data);
 
             })
@@ -234,26 +217,3 @@ async function fetchSubmissions(profileId) {
 
     return data;
 }
-
-// async function fetchSubmissions(profileId) {
-//     let page = 1;
-//     let allSubmissions = [];
-
-//     while (true) {
-//         const response = await fetch(`https://mentorpick.com/api/submission?limit=100&page=${page}&user=${profileId}`);
-//         const data = await response.json();
-
-//         if (data.length === 0) {
-//             break; // Break the loop if no more data
-//         }
-
-//         for (let i = 0; i < data.length; i++) {
-//             allSubmissions.push(data[i]);
-//         }
-
-//         page++;
-//     }
-
-//     console.log(allSubmissions);
-//     return allSubmissions;
-// }

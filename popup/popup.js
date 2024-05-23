@@ -11,21 +11,14 @@
     }
 })();
 
-
-
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("checkPlag").addEventListener("click", () => {
-        console.log("check clicked");
 
         handleSubmit();
-
-
-
     });
 });
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("download").addEventListener("click", () => {
-        console.log("download clicked");
         handleDownload();
     });
 });
@@ -36,7 +29,6 @@ chrome.runtime.onMessage.addListener((req) => {
     }
 });
 
-// Function to handle submission of input values
 function handleSubmit() {
     const allowedStreak = document.getElementById("allowedStreak").value;
     const timeDifference = document.getElementById("timeDifference").value;
@@ -46,10 +38,13 @@ function handleSubmit() {
             action: 'checkPlag',
             allowedStreak,
             timeDifference
+        }, (response) => {
+            if(response === 'dataNull')
+            alert('Try Refreshing MentorPick Profile Page');
         });
 
         chrome.storage.local.set({ 'allowedStreak': allowedStreak, 'timeDifference': timeDifference }, () => {
-            console.log('Saved values to ls');
+            // console.log('Saved values to ls');
         });
     }
 
@@ -89,7 +84,7 @@ async function fetchExcelData() {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get(['excelData', 'verdict'], (result) => {
             if (chrome.runtime.lastError) {
-                console.error(chrome.runtime.lastError.message);
+                // console.error(chrome.runtime.lastError.message);
                 reject(chrome.runtime.lastError);
             } else {
                 resolve(result);
@@ -100,18 +95,6 @@ async function fetchExcelData() {
 
 // Function to generate Excel sheet
 function generateExcelSheet(data) {
-    // const parsedData = JSON.parse(data.excelData);
-    // const rows = data.excelData.map(row => ({
-    //     name: row.firstName + " " + row.lastName,
-    //     userName: row.userName,
-    //     problem: row.problemTitle,
-    //     verdict: row.submission_verdictString,
-    //     time: row.submission_created_at,
-    //     contest: row.contestSlug,
-
-
-    // }))
-
 
     const worksheet = XLSX.utils.json_to_sheet(data.excelData);
     // console.log(rows);
@@ -137,54 +120,11 @@ function handleDownload() {
         });
 }
 
-// function processData(data) {
-//     return new Promise((resolve, reject) => {
-//         // Flatten the array of arrays into a single array of objects
-//         console.log(data.excelData);
-//         const flattenedArray = data.excelData.reduce((acc, curr, index, array) => {
-//             // Concatenate the current array to the accumulator
-//             acc = acc.concat(curr);
-//             // If it's not the last array, insert a blank object after concatenating
-//             if (index !== array.length - 1) {
-//                 acc.push({
-//                     "contestId": "",
-//                     "contestSlug": "",
-//                     "courseId": "",
-//                     "courseV2Id": "",
-//                     "firstName": "",
-//                     "lastName": "",
-//                     "problemId": "",
-//                     "problemSlug": "",
-//                     "problemTitle": "",
-//                     "sectionId": "",
-//                     "submission_chapterId": "",
-//                     "submission_created_at": "",
-//                     "submission_id": "",
-//                     "submission_inContest": "",
-//                     "submission_isPolling": "",
-//                     "submission_language": "",
-//                     "submission_score": "",
-//                     "submission_tokens": "",
-//                     "submission_verdictCode": "",
-//                     "submission_verdictString": "",
-//                     "userId": "",
-//                     "userName": ""
-//                 }); // Insert a blank object
-//             }
-//             return acc;
-//         }, []);
-//         // Convert the flattened array to JSON format
-//         console.log(flattenedArray);
-//         const flattenedJSON = JSON.stringify(flattenedArray);
-//         resolve({ excelData: flattenedJSON, verdict: data.verdict });
-//     })
-
-// }
 
 async function populateTable(data) {
     return new Promise((resolve, reject) => {
         const table = document.createElement('table');
-        table.className = 'table'; // Add Bootstrap table class
+        table.className = 'table'; 
 
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
@@ -208,7 +148,6 @@ async function populateTable(data) {
         });
         table.appendChild(tbody);
 
-        // Append the table to the container in the HTML
         document.getElementById('tableContainer').appendChild(table);
         resolve();
     });
