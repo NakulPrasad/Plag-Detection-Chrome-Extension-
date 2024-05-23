@@ -36,4 +36,7 @@ Compares new submissions against a database of previously submitted code to iden
 
 3. View/Download Results:
 - The extension will display any potential plagiarism submission window based on the submission time.
-    
+
+## Demo
+https://github.com/NakulPrasad/Plag-Detection-Chrome-Extension-/assets/96919039/f0c88422-6cf5-4d29-b869-905e0cab211d
+
